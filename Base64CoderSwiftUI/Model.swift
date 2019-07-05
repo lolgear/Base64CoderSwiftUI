@@ -68,13 +68,21 @@ protocol StringMutationsProtocol {
 }
 
 class JSON64Coder : StringMutationsProtocol {
-    enum SomeError: String, Error {
-        case encoding, decoding, serialization
+    enum SomeError: LocalizedError, CustomStringConvertible {
+        case validateStringIsNotUTF8(String)
+        var description: String {
+            switch self {
+            case let .validateStringIsNotUTF8(value): return "Value <\(value)> is not `String.UTF8`."
+            }
+        }
+        var localizedDescription: String {
+            return self.description
+        }
     }
     
     static func validate(value: String) -> Result<String, Error> {
         guard let data = value.data(using: .utf8) else {
-            return .failure(SomeError.decoding)
+            return .failure(SomeError.validateStringIsNotUTF8(value))
         }
         do {
             try JSONSerialization.jsonObject(with: data, options: [])
@@ -95,12 +103,24 @@ class JSON64Coder : StringMutationsProtocol {
 }
 
 class Base64Coder : StringMutationsProtocol {
-    enum SomeError: String, Error {
-        case encoding, decoding
+    enum SomeError: LocalizedError, CustomStringConvertible {
+        case encoding(String)
+        case decodeToBase64EncodedDataIsInvalid(String)
+        case decodeToUTF8StringIsInvalid(Data)
+        var description: String {
+            switch self {
+            case let .encoding(value): return "Value <\(value)> can't be encoded."
+            case let .decodeToBase64EncodedDataIsInvalid(value): return "Value <\(value)> can't be decoded to `Data.Base64`."
+            case let .decodeToUTF8StringIsInvalid(value): return "Value <\(value)> can't be decoded to `String.UTF8`."
+            }
+        }
+        var errorDescription: String? {
+            return self.description
+        }
     }
     static func encode(value: String) -> Result<String, Error> {
         guard let data = value.data(using: .utf8) else {
-            return .failure(SomeError.encoding)
+            return .failure(SomeError.encoding(value))
         }
         let string = data.base64EncodedString()
         return .success(string)
@@ -108,10 +128,10 @@ class Base64Coder : StringMutationsProtocol {
     
     static func decode(value: String) -> Result<String, Error> {
         guard let data = Data(base64Encoded: value) else {
-            return .failure(SomeError.decoding)
+            return .failure(SomeError.decodeToBase64EncodedDataIsInvalid(value))
         }
         guard let string = String(bytes: data, encoding: .utf8) else {
-            return .failure(SomeError.decoding)
+            return .failure(SomeError.decodeToUTF8StringIsInvalid(data))
         }
         return .success(string)
     }
@@ -139,6 +159,53 @@ extension Model {
 
 // MARK: Example
 extension Model {
+    static func example() -> Self {
+        let raw = Raw(string: "eyJleGFtcGxlIjoidmFsdWUifQ==")
+        let pretty = Pretty(string: "{\"example\":\"value\"}")
+        return self.init(raw: raw, pretty: pretty)
+    }
+}
+
+class PublishersModel: BindableObject {
+    @Published var raw: Raw
+    @Published var pretty: Pretty
+    
+    var didChange: AnyPublisher<Result<(Raw, Pretty), Error>, Never> = Publishers.Empty().eraseToAnyPublisher()
+    required init(raw: Raw, pretty: Pretty) {
+        self.raw = raw
+        self.pretty = pretty
+        
+        let rawPublisher = $raw.map { (raw) -> Result<(Raw, Pretty), Error> in
+            let decoded = Base64Coder.decode(value: raw.string).flatMap { JSON64Coder.decode(value: $0) }
+            return decoded.flatMap { rhs in
+                return .success((Raw(string: raw.string), Pretty(string: rhs)))
+            }
+        }
+        
+        let prettyPublisher = $pretty.map { (pretty) -> Result<(Raw, Pretty), Error> in
+            let encoded = JSON64Coder.encode(value: pretty.string).flatMap { Base64Coder.encode(value: $0) }
+            return encoded.flatMap { lhs in
+                return .success((Raw(string: lhs), Pretty(string: pretty.string)))
+            }
+        }
+                
+        let publisher = rawPublisher.merge(with: prettyPublisher).eraseToAnyPublisher()
+        self.didChange = publisher
+    }
+}
+
+// MARK: Structures
+extension PublishersModel {
+    struct Raw {
+        var string: String
+    }
+    struct Pretty {
+        var string: String
+    }
+}
+
+// MARK: Example
+extension PublishersModel {
     static func example() -> Self {
         let raw = Raw(string: "eyJleGFtcGxlIjoidmFsdWUifQ==")
         let pretty = Pretty(string: "{\"example\":\"value\"}")

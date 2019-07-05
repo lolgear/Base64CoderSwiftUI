@@ -45,9 +45,8 @@ struct ErrorView : View {
 
 struct TopMostView : View {
     @State var model = Model.example()
-    @State var encoded = ""
     var body: some View {
-        List {
+        Form {
             EncodedView(model: self.$model.raw.string)
             DecodedView(model: self.$model.pretty.string)
             ErrorView(model: self.model.error)
@@ -55,10 +54,42 @@ struct TopMostView : View {
     }
 }
 
-struct ContentView : View {
-
+struct TopMostView2 : View {
+    @State var model = PublishersModel.example()
+    @State var encoded: String = PublishersModel.example().raw.string
+    @State var decoded: String = PublishersModel.example().pretty.string
+    @State var error: Error?
     var body: some View {
-        TopMostView()
+        Form {
+            EncodedView(model: Binding(getValue: {
+                return self.encoded
+            }, setValue: { (newValue) in
+                self.encoded = newValue
+                self.model.raw.string = newValue
+            }) )
+            DecodedView(model: Binding(getValue: {
+                return self.decoded
+            }, setValue: { (newValue) in
+                self.decoded = newValue
+                self.model.pretty.string = newValue
+            }) )
+            ErrorView(model: self.error)
+        }.onReceive(self.model.didChange) { (value) in
+            switch value {
+            case let .success(raw, pretty):
+                self.error = nil
+                self.encoded = raw.string
+                self.decoded = pretty.string
+            case let .failure(error):
+                self.error = error
+            }
+        }
+    }
+}
+
+struct ContentView : View {
+    var body: some View {
+        TopMostView2()
     }
 }
 
