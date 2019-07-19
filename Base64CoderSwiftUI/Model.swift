@@ -27,7 +27,7 @@ class Model: BindableObject {
             case .failure(let error):
                 self.error = error
             }
-            didChange.send()
+            willChange.send()
         }
     }
     
@@ -48,13 +48,13 @@ class Model: BindableObject {
             case .failure(let error):
                 self.error = error
             }
-            didChange.send()
+            willChange.send()
         }
     }
 
     var error: Error?
     
-    var didChange = PassthroughSubject<Void, Never>()
+    var willChange = PassthroughSubject<Void, Never>()
     
     required init(raw: Raw, pretty: Pretty) {
         self.raw = raw
@@ -170,7 +170,7 @@ class PublishersModel: BindableObject {
     @Published var raw: Raw
     @Published var pretty: Pretty
     
-    var didChange: AnyPublisher<Result<(Raw, Pretty), Error>, Never> = Publishers.Empty().eraseToAnyPublisher()
+    var willChange: AnyPublisher<Result<(Raw, Pretty), Error>, Never> = Empty().eraseToAnyPublisher()
     required init(raw: Raw, pretty: Pretty) {
         self.raw = raw
         self.pretty = pretty
@@ -190,7 +190,7 @@ class PublishersModel: BindableObject {
         }
                 
         let publisher = rawPublisher.merge(with: prettyPublisher).eraseToAnyPublisher()
-        self.didChange = publisher
+        self.willChange = publisher
     }
 }
 

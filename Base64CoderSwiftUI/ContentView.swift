@@ -12,21 +12,13 @@ import Combine
 struct EncodedView : View {
     @Binding var model: String
     var body: some View {
-        TextField($model, placeholder: Text("Encoded"), onEditingChanged: { (finished) in
-            
-        }) {
-            
-        }
+        TextField($model, placeholder: Text("Encoded"), onEditingChanged: { (finished) in }) {}
     }
 }
 struct DecodedView : View {
     @Binding var model: String
     var body: some View {
-        TextField($model, placeholder: Text("Decoded"), onEditingChanged: { (finished) in
-            
-        }) {
-            
-        }
+        TextField($model, placeholder: Text("Decoded"), onEditingChanged: { (finished) in }) {}
     }
 }
 
@@ -74,7 +66,7 @@ struct TopMostView2 : View {
                 self.model.pretty.string = newValue
             }) )
             ErrorView(model: self.error)
-        }.onReceive(self.model.didChange) { (value) in
+        }.onReceive(self.model.willChange) { (value) in
             switch value {
             case let .success(raw, pretty):
                 self.error = nil
