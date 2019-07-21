@@ -47,7 +47,7 @@ struct TopMostView : View {
 }
 
 struct TopMostView2 : View {
-    @State var model = PublishersModel.example()
+    var model = PublishersModel.example()
     @State var encoded: String = PublishersModel.example().raw.string
     @State var decoded: String = PublishersModel.example().pretty.string
     @State var error: Error?
@@ -81,7 +81,14 @@ struct TopMostView2 : View {
 
 struct ContentView : View {
     var body: some View {
-        TopMostView2()
+        TabbedView {
+            TopMostView2().tabItem {
+                Text("With publishers").font(Font.headline)
+            }
+            TopMostView().tabItem {
+                Text("Without publishers").font(Font.headline)
+            }
+        }
     }
 }
 
