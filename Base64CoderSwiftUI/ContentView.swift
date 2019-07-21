@@ -12,13 +12,13 @@ import Combine
 struct EncodedView : View {
     @Binding var model: String
     var body: some View {
-        TextField($model, placeholder: Text("Encoded"), onEditingChanged: { (finished) in }) {}
+        TextField("Encoded", text: $model)
     }
 }
 struct DecodedView : View {
     @Binding var model: String
     var body: some View {
-        TextField($model, placeholder: Text("Decoded"), onEditingChanged: { (finished) in }) {}
+        TextField("Decoded", text: $model)
     }
 }
 
