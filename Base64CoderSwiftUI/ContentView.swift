@@ -53,15 +53,15 @@ struct TopMostView2 : View {
     @State var error: Error?
     var body: some View {
         Form {
-            EncodedView(model: Binding(getValue: {
+            EncodedView(model: Binding(get: {
                 return self.encoded
-            }, setValue: { (newValue) in
+            }, set: { (newValue) in
                 self.encoded = newValue
                 self.model.raw.string = newValue
             }) )
-            DecodedView(model: Binding(getValue: {
+            DecodedView(model: Binding(get: {
                 return self.decoded
-            }, setValue: { (newValue) in
+            }, set: { (newValue) in
                 self.decoded = newValue
                 self.model.pretty.string = newValue
             }) )
@@ -81,7 +81,7 @@ struct TopMostView2 : View {
 
 struct ContentView : View {
     var body: some View {
-        TabbedView {
+        TabView {
             TopMostView2().tabItem {
                 Text("With publishers").font(Font.headline)
             }

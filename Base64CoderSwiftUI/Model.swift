@@ -10,7 +10,7 @@ import Foundation
 import Combine
 import SwiftUI
 
-class Model: BindableObject {
+class Model: ObservableObject {
     var raw: Raw {
         didSet {
             let pretty = self.pretty
@@ -166,7 +166,7 @@ extension Model {
     }
 }
 
-class PublishersModel: BindableObject {
+class PublishersModel: ObservableObject {
     @Published var raw: Raw
     @Published var pretty: Pretty
     
