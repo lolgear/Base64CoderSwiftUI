@@ -27,7 +27,7 @@ class Model: ObservableObject {
             case .failure(let error):
                 self.error = error
             }
-            willChange.send()
+            objectWillChange.send()
         }
     }
     
@@ -48,13 +48,13 @@ class Model: ObservableObject {
             case .failure(let error):
                 self.error = error
             }
-            willChange.send()
+            objectWillChange.send()
         }
     }
 
     var error: Error?
     
-    var willChange = PassthroughSubject<Void, Never>()
+    var objectWillChange = PassthroughSubject<Void, Never>()
     
     required init(raw: Raw, pretty: Pretty) {
         self.raw = raw
